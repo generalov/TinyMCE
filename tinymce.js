@@ -22,7 +22,7 @@
  * 
  * Use a compare tool to see modifications to the orginal tinymce.js code (compare with http://tfsnpt.int.thomson.com:8080/tfs/Cobalt_Collection/Cobalt%20Static%20Content/_versionControl#fileName=tinymce.js&path=%24%2FCobalt+Static+Content%2FDevelopment%2FStaticContent%2Fsite%2FExternal%2Ftinymce)
  *
- * Public access at https://github.com/DmitrySvi/TinyMCE/blob/master/tinymce.js
+ * Public access at https://github.com/DmitrySvi/TinyMCE
  *
  * @date: 2015-03-10 
  * @copyright: Copyright (c) 1999-2015 Ephox Corp. All rights reserved.
