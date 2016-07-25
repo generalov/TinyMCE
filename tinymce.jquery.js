@@ -8,7 +8,7 @@
 /*globals $code */
 
 /**
- * This version of date.js pulled from https://www.tinymce.com/download/ on April 27, 2015 and modified for Thomson Reuters. 
+ * This version of tinymce.jquery.js pulled from https://www.tinymce.com/download/ on April 27, 2015 and modified for Thomson Reuters. 
  * The following modifications were made for Thomson Reuters:
  * 
  * - The tapLinksAndImages() method was changed.
@@ -21,7 +21,9 @@
  *   So tapLinksAndImages was modified to apply its logic for elements inside of Editor container element only.
  * 
  * Use a compare tool to see modifications to the orginal tinymce.js code (compare with http://tfsnpt.int.thomson.com:8080/tfs/Cobalt_Collection/Cobalt%20Static%20Content/_versionControl#fileName=tinymce.js&path=%24%2FCobalt+Static+Content%2FDevelopment%2FStaticContent%2Fsite%2FExternal%2Ftinymce)
- * 
+ *
+ * Public access at https://github.com/DmitrySvi/TinyMCE/edit/master/tinymce.jquery.js
+ *
  * @date: 2015-03-10 
  * @copyright: Copyright (c) 1999-2015 Ephox Corp. All rights reserved.
  * @license: Released under LGPL License. See license.txt. 
