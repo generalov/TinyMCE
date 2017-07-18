@@ -19915,6 +19915,23 @@ define("tinymce/EditorCommands", [
 						restoreSelection();
 					}
 				}
+
+				// Blink insertunorderedlist/insertorderedlist native commands
+				// might change a style attribute value.
+				// For example they change text-decoration to text-decoration-line
+				// Restore style attribute to the previous value
+				var node = listElm || dom.getParent(selection.getNode(), dom.isBlock);
+				var walker = new TreeWalker(node, node.parentNode);
+
+				while ((node = walker.next())) {
+					if (node.nodeType == 1 && node.hasAttribute('data-mce-style')) {
+						var oldValue = node.getAttribute('data-mce-style');
+
+						if (oldValue && oldValue !== node.getAttribute('style')) {
+							node.setAttribute('style', oldValue);
+						}
+					}
+				}
 			},
 
 			// Override commands to use the text formatter engine
