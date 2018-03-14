@@ -20128,7 +20128,10 @@ define("tinymce/EditorCommands", [
 				// Restore selection for fixing a bug when link is insered at the beginning of the text
 				var savedSelection = editor.selection.savedSelection;
 
-				if (savedSelection && savedSelection.node && savedSelection.start && savedSelection.end) {
+				if (savedSelection
+					&& savedSelection.node
+					&& savedSelection.hasOwnProperty('start')
+					&& savedSelection.hasOwnProperty('end')) {
 					var newRange = document.createRange();
 
 					newRange.setStart(savedSelection.node, savedSelection.start);
