@@ -65,12 +65,44 @@ tinymce.PluginManager.add('link', function(editor) {
 		var currentSelection = document.getSelection();
 		var baseOffset = currentSelection.baseOffset ? currentSelection.baseOffset : currentSelection.anchorOffset;
 		var focusOffset = currentSelection.focusOffset;
+		var currentSelectionNode = currentSelection.focusNode || currentSelection.anchorNode;
 
-		selection.savedSelection = {
-			node: currentSelection.focusNode,
-			start: baseOffset < focusOffset ? baseOffset : focusOffset,
-			end: focusOffset > baseOffset ? focusOffset : baseOffset
-		};
+		selection.savedSelection = {};
+
+		function getTextNode(elem) {
+			var node = elem;
+			
+			while(node) {
+				if (node.nodeType === Node.TEXT_NODE) {
+					return node;
+				} else if (node.nodeName === 'BR') {
+					return node.parentElement;
+				} else {
+					node = node.lastChild;
+				}
+			}
+
+			return node;
+		}
+		
+		// prevent saving selection if content is selected outside of the editor's body
+		if (currentSelectionNode
+				&& currentSelectionNode.parentElement
+				&& dom.$(currentSelectionNode.parentElement).closest('.mce-content-body').length) {
+			selection.savedSelection.node = currentSelectionNode;
+			selection.savedSelection.start = baseOffset < focusOffset ? baseOffset : focusOffset;
+			selection.savedSelection.end = focusOffset > baseOffset ? focusOffset : baseOffset;
+		} else {
+			document.getSelection().removeAllRanges();
+
+			var editorTextElem = editor.getBody();
+			var selectionNode = getTextNode(editorTextElem);
+			var selectionPosition = selectionNode.textContent.length;
+
+			selection.savedSelection.node = selectionNode;
+			selection.savedSelection.start = selectionPosition;
+			selection.savedSelection.end = selectionPosition;
+		}
 
 		function linkListChangeHandler(e) {
 			var textCtrl = win.find('#text');
