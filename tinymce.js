@@ -19,6 +19,11 @@
  *
  *   To fix this isDescendant function was added. This function checks whether an element is descendant of an other element.
  *   So tapLinksAndImages was modified to apply its logic for elements inside of Editor container element only.
+ *
+ * - The mceInsertContent() was changed
+ *   Fixed a bug, when user tries to add a link to the highlighted text and a new link is inserted in the beginning of the text.
+ *   After clicking OK button of the insert/edit link popup cursor position is restored if it was previously saved
+ *   and link appears in necessary place.
  * 
  * Use a compare tool to see modifications to the orginal tinymce.js code (compare with http://tfsnpt.int.thomson.com:8080/tfs/Cobalt_Collection/Cobalt%20Static%20Content/_versionControl#fileName=tinymce.js&path=%24%2FCobalt+Static+Content%2FDevelopment%2FStaticContent%2Fsite%2FExternal%2Ftinymce)
  *
@@ -20119,6 +20124,24 @@ define("tinymce/EditorCommands", [
 
 				// Replace the caret marker with a span bookmark element
 				value = value.replace(/\{\$caret\}/, bookmarkHtml);
+
+				// Restore selection for fixing a bug when link is insered at the beginning of the text
+				var savedSelection = editor.selection.savedSelection;
+
+				if (savedSelection
+					&& savedSelection.node
+					&& savedSelection.hasOwnProperty('start')
+					&& savedSelection.hasOwnProperty('end')) {
+					var newRange = document.createRange();
+
+					newRange.setStart(savedSelection.node, savedSelection.start);
+					newRange.setEnd(savedSelection.node, savedSelection.end);
+
+					var newSelection = document.getSelection();
+
+					newSelection.removeAllRanges();
+					newSelection.addRange(newRange);
+				}
 
 				// If selection is at <body>|<p></p> then move it into <body><p>|</p>
 				rng = selection.getRng();
