@@ -20,11 +20,17 @@
  *   To fix this isDescendant function was added. This function checks whether an element is descendant of an other element.
  *   So tapLinksAndImages was modified to apply its logic for elements inside of Editor container element only.
  *
+ * - The addBrAfterLastLinks method was changed.
+ *   This method is invoked only on Gecko browsers. The method selects all 'A' tags. For all links that are last children of block
+ *   it adds a bogus br element. If page contains any links anywere except editor area, the markup will be broken.
+ *
+ *   To fix it the selection was narrowed by adding the class of editor container.
+ *
  * - The mceInsertContent() was changed
  *   Fixed a bug, when user tries to add a link to the highlighted text and a new link is inserted in the beginning of the text.
  *   After clicking OK button of the insert/edit link popup cursor position is restored if it was previously saved
  *   and link appears in necessary place.
- * 
+ *
  * Use a compare tool to see modifications to the orginal tinymce.js code (compare with http://tfsnpt.int.thomson.com:8080/tfs/Cobalt_Collection/Cobalt%20Static%20Content/_versionControl#fileName=tinymce.js&path=%24%2FCobalt+Static+Content%2FDevelopment%2FStaticContent%2Fsite%2FExternal%2Ftinymce)
  *
  * Public access at https://github.com/DmitrySvi/TinyMCE
@@ -16176,18 +16182,18 @@ define("tinymce/Formatter", [
 				],
 
 				alignleft: [
-					{selector: 'figure,p,h1,h2,h3,h4,h5,h6,td,th,tr,div,ul,ol,li', styles: {textAlign: 'left'}, defaultBlock: 'div'},
+                    {selector: 'figure,p,h1,h2,h3,h4,h5,h6,td,th,tr,div,ul,ol,li', styles: {textAlign: 'left'}, defaultBlock: 'div'},
 					{selector: 'img,table', collapsed: false, styles: {'float': 'left'}}
 				],
 
 				aligncenter: [
-					{selector: 'figure,p,h1,h2,h3,h4,h5,h6,td,th,tr,div,ul,ol,li', styles: {textAlign: 'center', listStylePosition: 'inside'}, defaultBlock: 'div'},
+                    {selector: 'figure,p,h1,h2,h3,h4,h5,h6,td,th,tr,div,ul,ol,li', styles: {textAlign: 'center', listStylePosition: 'inside'}, defaultBlock: 'div'},
 					{selector: 'img', collapsed: false, styles: {display: 'block', marginLeft: 'auto', marginRight: 'auto'}},
 					{selector: 'table', collapsed: false, styles: {marginLeft: 'auto', marginRight: 'auto'}}
 				],
 
 				alignright: [
-					{selector: 'figure,p,h1,h2,h3,h4,h5,h6,td,th,tr,div,ul,ol,li', styles: {textAlign: 'right', listStylePosition: 'inside'}, defaultBlock: 'div'},
+                    {selector: 'figure,p,h1,h2,h3,h4,h5,h6,td,th,tr,div,ul,ol,li', styles: {textAlign: 'right', listStylePosition: 'inside'}, defaultBlock: 'div'},
 					{selector: 'img,table', collapsed: false, styles: {'float': 'right'}}
 				],
 
@@ -19896,7 +19902,7 @@ define("tinymce/EditorCommands", [
 					}
 				});
 
-				toggleFormat('align' + align);
+                toggleFormat('align' + align);
 				execCommand('mceRepaint');
 			},
 
@@ -26761,6 +26767,22 @@ define("tinymce/util/Quirks", [
 		var mceInternalUrlPrefix = 'data:text/mce-internal,';
 		var mceInternalDataType = isIE ? 'Text' : 'URL';
 
+/* FIX:START */
+
+		/**
+		 * Fix for bugs http://tfsnpt.int.thomson.com:8080/tfs/Cobalt_Collection/Cobalt%20Product%20Backlog/_workitems#id=878077
+		 * and DEVSUP-662
+		 */
+		function isDescendant(target, parent) {
+			do {
+				if (target.parentElement === parent)
+					return true;
+			} while (target = target.parentElement)
+			return false;
+		}
+
+/* FIX:END */
+
 		/**
 		 * Executes a command with a specific state this can be to enable/disable browser editing features.
 		 */
@@ -27502,18 +27524,23 @@ define("tinymce/util/Quirks", [
 			editor.on('click', function(e) {
 				var target = e.target;
 
-				// Workaround for bug, http://bugs.webkit.org/show_bug.cgi?id=12250
-				// WebKit can't even do simple things like selecting an image
-				// Needs to be the setBaseAndExtend or it will fail to select floated images
-				if (/^(IMG|HR)$/.test(target.nodeName)) {
-					e.preventDefault();
-					selection.getSel().setBaseAndExtent(target, 0, target, 1);
-					editor.nodeChanged();
-				}
+/* FIX:START */
+				// Fix for DEVSUP-662
+				if (isDescendant(target, editor.bodyElement)) {
+/* FIX:END */
+					// Workaround for bug, http://bugs.webkit.org/show_bug.cgi?id=12250
+					// WebKit can't even do simple things like selecting an image
+					// Needs to be the setBaseAndExtend or it will fail to select floated images
+					if (/^(IMG|HR)$/.test(target.nodeName)) {
+						e.preventDefault();
+						selection.getSel().setBaseAndExtent(target, 0, target, 1);
+						editor.nodeChanged();
+					}
 
-				if (target.nodeName == 'A' && dom.hasClass(target, 'mce-item-anchor')) {
-					e.preventDefault();
-					selection.select(target);
+					if (target.nodeName == 'A' && dom.hasClass(target, 'mce-item-anchor')) {
+						e.preventDefault();
+						selection.select(target);
+					}
 				}
 			});
 		}
@@ -27759,7 +27786,11 @@ define("tinymce/util/Quirks", [
 		 */
 		function addBrAfterLastLinks() {
 			function fixLinks() {
-				each(dom.select('a'), function(node) {
+				/**
+				* Added the .mce-content-body class to narrow a selection of A tags. In result this initial fix will be only applied 
+				* for text container and it will not modify a markup anywhere except this container
+				*/
+				each(dom.select('.mce-content-body a'), function (node) {
 					var parentNode = node.parentNode, root = dom.getRoot();
 
 					if (parentNode.lastChild === node) {
@@ -28094,18 +28125,6 @@ define("tinymce/util/Quirks", [
 		 * 2) If you hold down the finger it will display the link/image touch callout menu.
 		 */
 		function tapLinksAndImages() {
-/* FIX:START */
-			/**
-			 * Fix for bug http://tfsnpt.int.thomson.com:8080/tfs/Cobalt_Collection/Cobalt%20Product%20Backlog/_workitems#id=878077
-			 */
-			function isDescendant(target, parent) {
-				do {
-					if (target.parentElement === parent)
-						return true;
-				} while (target = target.parentElement)
-				return false;
-			}
-/* FIX:END */
 
 			editor.on('click', function(e) {
 				var elm = e.target;
