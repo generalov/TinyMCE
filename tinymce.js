@@ -20385,12 +20385,36 @@ define("tinymce/EditorCommands", [
 			},
 
 			selectAll: function() {
-				var root = dom.getRoot(), rng;
+				var root = editor.getBody(), rng;
+				var iter, textNode, firstAndLastTextNodes = [];
 
 				if (selection.getRng().setStart) {
 					rng = dom.createRng();
-					rng.setStart(root, 0);
-					rng.setEnd(root, root.childNodes.length);
+
+					// Browsers select the root element itself when you press Ctrl+A.
+					// Text formatting actions do not work correctly in such case.
+					// The tweaking of the selection is a workaround.
+					// Search the first and last #text nodes then use them as range boundaries.
+					iter = root.ownerDocument.createNodeIterator(
+						root,
+						NodeFilter.SHOW_TEXT,
+						function () {
+							return NodeFilter.FILTER_ACCEPT;
+						},
+						false
+					);
+					while (textNode = iter.nextNode()) {
+						firstAndLastTextNodes[firstAndLastTextNodes.length ? 1: 0] = textNode;
+					}
+
+					if (firstAndLastTextNodes.length) {
+						rng.setStartBefore(firstAndLastTextNodes[0]);
+						rng.setEndAfter(firstAndLastTextNodes[firstAndLastTextNodes.length - 1]);
+					} else {
+						rng.setStart(root, 0);
+						rng.setEnd(root, root.childNodes.length);
+					}
+
 					selection.setRng(rng);
 				} else {
 					// IE will render it's own root level block elements and sometimes
@@ -27416,9 +27440,7 @@ define("tinymce/util/Quirks", [
 		 * This selects the whole body so that backspace/delete logic will delete everything
 		 */
 		function selectAll() {
-			if (!editor.settings.content_editable) {
-				editor.shortcuts.add('meta+a', null, 'SelectAll');
-			}
+			editor.shortcuts.add('meta+a', null, 'SelectAll');
 		}
 
 		/**
